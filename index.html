@@ -4,8 +4,61 @@
     <meta charset="UTF-8">
     <title>Photogallery 2</title>
     <link rel="stylesheet" href="gallery.css" />
+    <link rel="stylesheet" href="fontello/css/fontello.css" />
+    <link href="https://fonts.googleapis.com/css?family=Roboto:100,100i,300,300i,400,400i,500,500i,700,700i,900,900i&amp;subset=cyrillic,cyrillic-ext,latin-ext" rel="stylesheet">
     <script type="module" src="main.js"></script>
 </head>
-<body>
+<body lang="en">
+    <nav>
+        <div class="me"><span lang="ru">Главная</span><span lang="en">Home</span></div><hr/>
+        <div class="galleries"><span lang="ru">Галереи</span><span lang="en">Galleries</span></div>
+        <div class="lang" lang="ru"><span lang="ru">Русский</span><span lang="en">English</span></div>
+        <div class="logo">
+            <div>Svetlana</div>
+            <div>Khromtsova</div>
+            <div class="subtitle">photographer</div>
+        </div>
+    </nav>
+    <section class="me">
+        <div class="scroll-outer">
+            <div class="scroll-inner">
+                <div class="contents">
+                    <div class="logo">
+                        <div>Svetlana</div>
+                        <div>Khromtsova</div>
+                        <div class="subtitle">photographer</div>
+                    </div>
+                    <div class="to-galleries">&#xe804;</div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <section class="galleries overview">
+        <div class="to-main">&#xe803;</div>
+        <div class="scroll-outer galleries-list-outer">
+            <div class="scroll-inner">
+                <div class="galleries-list"></div>
+            </div>
+        </div>
+        <div class="scroll-outer galleries-contents-outer">
+            <div class="scroll-inner">
+                <div class="galleries-contents"></div>
+            </div>
+        </div>
+    </section>
+    <section class="image-viewer">
+        <div class="background-overlay">&nbsp;</div>
+        <div class="image-container">
+            <img src="" />
+            <div class="ui-overlay">
+                <div class="prev">&#xe803;</div>
+                <div class="next">&#xe804;</div>
+                <div class="fs-toggle">&#xe809;</div>
+                <div class="exit">&#xe805;</div>
+                <div class="slideshow">&#xe806;</div>
+            </div>
+        </div>
+
+    </section>
 </body>
 </html>

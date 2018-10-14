@@ -1,0 +1,613 @@
+body[lang="ru"] [lang="en"],
+body[lang="en"] [lang="ru"],
+body[lang="ru"]>nav>.lang>[lang="ru"],
+body[lang="en"]>nav>.lang>[lang="en"]{
+    display: none;
+}
+body[lang="ru"]>nav>.lang[lang="en"],
+body[lang="en"]>nav>.lang[lang="ru"],
+body[lang="ru"]>nav>.lang>[lang="en"],
+body[lang="en"]>nav>.lang>[lang="ru"]{
+    display: block;
+}
+body{
+    margin: 0;
+    font-family:'Roboto','Helvetica','Arial',sans-serif;
+    background: #746E6E;
+    --header-size:3em;
+    --heder-button-size:8em;
+    --gallery-preview-width:15em;
+    --scrollbar-ratio:1;
+    --scrollbar-top:0;
+}
+
+body>nav{
+    position: fixed;
+    top: 0;
+    height: var(--header-size);
+    z-index: 6;
+    width: 100%;
+    background: #000;
+    display: flex;
+    color: #aaa;
+    justify-content: center;
+    align-items: flex-end;
+    user-select: none;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+}
+body>nav>hr{
+    position: absolute;
+    bottom:0;
+    font-size: 0.9em;
+    background: #fff;
+    height: .15em;
+    margin: 0;
+    border: none;
+    width: var(--heder-button-size);
+    transition: .5s;
+}
+body>nav>div{
+    box-sizing: border-box;
+    text-align: center;
+    font-size: 0.9em;
+    padding: 0 .5em;
+    font-weight: 300;
+    cursor: pointer;
+    transition: .5s;
+    text-transform: uppercase;
+    font-kerning:none;
+}
+body>nav>div{
+    width: var(--heder-button-size);
+    line-height: var(--header-size);
+    height: var(--header-size);
+}
+body>nav>div:hover{
+    background: #ffffff40;
+}
+
+.me>nav>.me,
+.galleries>nav>.galleries{
+    font-weight:500;
+    color: #fff;
+}
+.me>nav>hr{
+    transform: translateX(calc(var(--heder-button-size)*-1));
+}
+.galleries>nav>hr {
+    transform: translateX(0);
+}
+
+
+
+.logo{
+    color: #FFFFee80;
+    font-family: Georgia,"Times New Roman",Times,serif;
+    font-weight: 400;
+    line-height: 80%;
+    text-align: right;
+    text-transform: none;
+    font-kerning:none;
+    cursor: default;
+    user-select: none;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+}
+.logo>div:first-of-type{
+    margin-right: 0.02em;
+    letter-spacing: .023em;
+}
+.logo>div::first-letter{
+    font-size: 110%;
+}
+.logo>.subtitle {
+    font-family: "Lucida Sans Unicode","Lucida Grande",sans-serif;
+    font-size: .35em;
+    letter-spacing: .67em;
+    position: relative;
+    font-kerning:none;
+    right: -.64em;
+    text-align: right;
+    text-transform: uppercase;
+}
+nav>.logo{
+    position: absolute;
+    top: .1em;
+    right: .1em;
+    font-size: 1.25em;
+}
+nav>.logo:hover{
+    background: transparent;
+}
+
+section{
+    display: none;
+}
+body.me>section.me,
+body.galleries>section.galleries{
+    display: inherit;
+}
+
+section.me{
+    position: relative;
+    width: 700px;
+    height: calc(100vh - var(--header-size));
+    background: #000;
+    margin: var(--header-size) auto 0 auto;
+}
+section.me .logo{
+    position: absolute;
+    top:0em;
+    left: .3em;
+    font-size: 1.6em;
+}
+section.me .bg {
+    right:0;
+    text-align: right;
+    overflow-x: hidden;
+    width: 100%;
+    z-index: 0;
+    user-select: none;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+}
+section.me .contacts{
+    text-align: left;
+    position: absolute;
+    left: 0;
+    top: 4em;
+    z-index: 1;
+}
+section.me .to-galleries{
+    position: fixed;
+    display: block;
+    color: #ffffff;
+    right: 0;
+    padding-right: .5em;
+    font-family: "fontello";
+    cursor: pointer;
+    user-select: none;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    top:0;
+    width: 20%;
+    text-align: right;
+    font-size: 3em;
+    line-height: 100vh;
+    height: 100%;
+    z-index: 1;
+    opacity: .2;
+}
+section.me .to-galleries:hover{
+    opacity: 1;
+}
+section.me .contacts a,
+section.me .contacts:before{
+    content: "Contact me:";
+    display: block;
+    color: #ffffff40;
+    box-sizing: border-box;
+    height: 2em;
+    line-height: 2em;
+    padding-left: 1em;
+    width: 15em;
+    border-bottom-width: 1px;
+    border-bottom-style: dashed;
+    border-image: linear-gradient( 90deg, #ffffff00, #ffffff15 5%, #ffffff24 10%, #ffffff30 20%, #ffffff20 30%, #ffffff08 60%, #ffffff00) 100% 1;
+}
+body[lang="ru"]>section.me div.contacts:before{
+    content: "Связаться со мной:";
+}
+section.me .contacts:before{
+    color: #ffffff60;
+}
+section.me .contacts a{
+    font-family: "fontello";
+    text-align: center;
+    padding-right: 70%;
+    text-decoration: none;
+}
+section.me .contacts a:hover{
+    color: #ffffffd0;
+    background: linear-gradient( 90deg, #ffffff00, #ffffff15 5%, #ffffff24 10%, #ffffff30 20%, #ffffff20 30%, #ffffff08 60%, #ffffff00);
+    background-size: 100% 100%;
+}
+
+
+
+.scroll-outer{
+    overflow: hidden;
+    position: relative;
+    width: inherit;
+    height: inherit;
+    min-height: inherit;
+    max-height: inherit;
+}
+.scroll-inner{
+    padding-right: 50px;
+    width: inherit;
+    height: inherit;
+    min-height: inherit;
+    max-height: inherit;
+    overflow-y: scroll;
+    overflow-x: hidden;
+    z-index: 1;
+    position: absolute;
+    box-sizing: content-box;
+}
+.scroll-inner>*{
+    margin-right: calc(var(--scrollbar-size)*-1);
+}
+.scroll-bar-container{
+    display: block;
+    overflow: hidden;
+    position: absolute;
+    top:0;
+    right:0;
+    height: 100%;
+    opacity: 0;
+    z-index: 2;
+    transition: .5s;
+    width: 0.5em;
+    cursor: pointer;
+    user-select: none;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+}
+.scroll-bar{
+    display: block;
+    overflow: hidden;
+    position: absolute;
+    top:calc(100% * var(--scrollbar-top));
+    height: calc(100% * var(--scrollbar-ratio));
+    border-radius: 0.25em;
+    right: 0;
+    width: 0.5em;
+    background: #ffffff50;
+}
+.scroll-outer:hover>.scroll-bar-container{
+    opacity: 1;
+}
+.no-scroll>.scroll-bar-container{
+    display: none;
+}
+
+
+
+section.galleries{
+    position: relative;
+    width: 52em;
+    background: #000;
+    transition: .5s;
+    color: #fff;
+    height: calc(100vh - var(--header-size));
+/*     height: 100vh; */
+    margin: var(--header-size) auto 0 auto;
+}
+section.galleries>*{
+    width: 100%;
+}
+section.galleries .to-main{
+    position: fixed;
+    display: block;
+    box-sizing: border-box;
+    color: #ffffff;
+    left: 0;
+    font-family: "fontello";
+    padding-left: .5em;
+    cursor: pointer;
+    user-select: none;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    top:0;
+    width: 50%;
+    text-align: left;
+    font-size: 3em;
+    line-height: 100vh;
+    height: 100vh;
+    overflow: hidden;
+    opacity: .2;
+}
+section.galleries .to-main:hover{
+    opacity: 1;
+}
+section.galleries:not(.overview) .to-main{
+    display: none;
+}
+
+section.galleries.overview .galleries-contents,
+section.galleries .galleries-contents>.gallery:not(.open){
+    display: none;
+}
+.galleries-list-outer{
+    grid-column: 2 / span 1;
+}
+.galleries-contents-outer{
+    grid-column: 3 / span 1;
+}
+.galleries-list{
+    display: flex;
+    box-sizing: border-box;
+    padding: .5em;
+    flex-flow: row wrap;
+    justify-content: space-evenly;
+    align-items: center;
+    align-content: flex-start;
+    transition: .5s;
+/*     height: calc(100vh - var(--header-size)); */
+    position: relative;
+}
+section.galleries:not(.overview) .galleries-list{
+    background: #746E6E;
+}
+.galleries-list>.gallery{
+    flex:0 1 var(--gallery-preview-width);
+    overflow: hidden;
+    position: relative;
+    margin: .5em;
+    border-radius: .1em;
+    height:calc(var(--gallery-preview-width)*2/3);
+}
+.galleries-list>.gallery>.background{
+    position: relative;
+    z-index: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+.galleries-list>.gallery>.name{
+    position: absolute;
+    z-index: 20;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    box-sizing: border-box;
+    height: 2em;
+    text-align: center;
+    font-weight: 500;
+    line-height: 2em;
+    background: #00000044;
+    background-blend-mode: darken;
+    border-bottom: .15em solid transparent;
+}
+body.galleries>section.galleries:not(.overview) .galleries-list>.open>.name,
+.galleries-list>.gallery:hover>.name{
+    background: #00000080;
+    border-bottom: .15em solid #fff;
+}
+body.galleries>section.galleries:not(.overview) .galleries-list>.open:hover>.name{
+    height: 0;
+}
+body.galleries>section.galleries:not(.overview) .galleries-list>.open>.name::before{
+    content: "";
+    display: block;
+    position: absolute;
+    font-family: "fontello";
+    top:0.65em;
+    left: 0.3em;
+    height: 0;
+    z-index: 5;
+    line-height: 0;
+    font-size: 1.5em;
+}
+body.galleries>section.galleries:not(.overview) .galleries-list>.open:hover>.name::before{
+    background: #00000080;
+    bottom:0;
+    top: unset;
+    font-size: 4em;
+    line-height: calc(var(--gallery-preview-width)/6); /* *2/3 /4em */
+    left:0;
+    height: calc(var(--gallery-preview-width)/6);
+    width: 100%;
+}
+body.galleries>section.galleries{
+    display: grid;
+    grid-template-columns: 0 var(--gallery-preview-width) 1fr;
+    grid-template-rows: 1fr;
+    transition: .5s;
+}
+body.galleries>section.galleries:not(.overview) .galleries-list>.open{
+    order: -1;
+    margin-bottom: 4em;
+}
+body.galleries>section.galleries:not(.overview){
+    width: 100%;
+}
+body.galleries>section.galleries.overview{
+    grid-template-columns: 0 auto 0;
+}
+section.galleries.overview>:last-child{
+    display: none;
+}
+.galleries-contents>.gallery{
+    display: flex;
+    box-sizing: border-box;
+    padding: .5em;
+    flex-flow: row wrap;
+    justify-content: space-evenly;
+    align-items: center;
+    align-content: flex-start;
+/*     height: calc(100vh - var(--header-size)); */
+}
+.galleries-contents>.gallery>.image-preview{
+    flex:0 1 var(--gallery-preview-width);
+    height:calc(var(--gallery-preview-width)*2/3);
+    margin: .5em;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+
+
+section.image-viewer.open{
+    display: block;
+    position: fixed;
+    box-sizing: border-box;
+    top:0;
+    left:0;
+    z-index:60;
+    width: 100vw;
+    height: 100vh;
+}
+section.image-viewer>.background-overlay{
+    display: block;
+    position: fixed;
+    background: #000000a0;
+    top:0;
+    left:0;
+    z-index:1;
+    width: 100vw;
+    height: 100vh;
+}
+section.image-viewer>.image-container{
+    position: relative;
+    padding-top:50vh;
+    top:0;
+    left:0;
+    z-index:1;
+    overflow: hidden;
+    width: 100%;
+    height: 100%;
+    text-align:center;
+}
+section.image-viewer>.image-container>img{
+    max-width: 100%;
+    transform: translateY(-50%);
+    max-height: 100%;
+}
+section.image-viewer>.image-container>.ui-overlay{
+    display: block;
+    position: absolute;
+    top:0;
+    left:0;
+    z-index:1;
+    overflow: hidden;
+    width: 100%;
+    height: 100%;
+    user-select: none;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+}
+.ui-overlay>.prev,
+.ui-overlay>.slideshow,
+.ui-overlay>.next,
+.ui-overlay>.exit,
+.ui-overlay>.fs-toggle{
+    font-family:"fontello";
+    color:#fff;
+    text-shadow: -1px 0 #000000aa, 0 1px #000000aa,
+      1px 0 #000000aa, 0 -1px #000000aa;
+}
+section.image-viewer .ui-overlay>.prev,
+section.image-viewer .ui-overlay>.next{
+    display: block;
+    position: absolute;
+    top:0;
+    font-size: 3em;
+    line-height: 100vh;
+    height: 100%;
+    z-index: 1;
+    opacity: .2;
+}
+section.image-viewer .ui-overlay>.prev:hover,
+section.image-viewer .ui-overlay>.next:hover{
+    opacity: 1;
+}
+section.image-viewer .ui-overlay>.prev{
+    left:0;
+    text-align: left;
+    padding-left: 1em;
+    width: 20%;
+}
+section.image-viewer .ui-overlay>.next{
+    right: 0;
+    text-align: right;
+    padding-right: 1em;
+    width: 80%;
+}
+section.image-viewer .ui-overlay>.exit,
+section.image-viewer .ui-overlay>.slideshow,
+section.image-viewer .ui-overlay>.fs-toggle{
+    display: block;
+    position: absolute;
+    font-size: 1.2em;
+    text-align: center;
+    border-radius: .2em;
+    height: 2em;
+    line-height: 2em;
+    width: 2em;
+    z-index: 2;
+    opacity: .2;
+}
+section.image-viewer .ui-overlay>.exit{
+    left: .5em;
+    top:.5em;
+}
+section.image-viewer .ui-overlay>.fs-toggle{
+    right: .5em;
+    top:.5em;
+}
+section.image-viewer .ui-overlay>.slideshow{
+    left: .5em;
+    position: fixed;
+    bottom: .5em;
+}
+
+section.image-viewer.slideshow .ui-overlay>.slideshow{
+    color: #00aaff;
+    opacity: .8;
+}
+section.image-viewer .ui-overlay>.slideshow:hover,
+section.image-viewer .ui-overlay>.exit:hover,
+section.image-viewer .ui-overlay>.fs-toggle:hover{
+    opacity: 1;
+    background: #00000080;
+}
+section.image-viewer .ui-overlay>.slideshow:hover{
+    width: auto;
+    padding: 0 .6em;
+}
+section.image-viewer .ui-overlay>.slideshow:hover::after{
+    content: "Enable slideshow";
+    font-family:'Roboto','Helvetica','Arial',sans-serif;
+    font-weight: 400;
+    font-size: .8em;
+    margin-left: .5em;
+}
+section.image-viewer.slideshow .ui-overlay>.slideshow:hover::after{
+    content: "Disable slideshow";
+}
+body[lang="ru"] section.image-viewer .ui-overlay>.slideshow:hover::after{
+    content: "Включить слайдшоу";
+}
+body[lang="ru"] section.image-viewer.slideshow .ui-overlay>.slideshow:hover::after{
+    content: "Выключить слайдшоу";
+}
+
+@media only screen and (max-width: 1300px) and (min-resolution: 1.5dppx) and (orientation : portrait),
+    only screen and (max-width: 850px){
+    body{
+        --gallery-preview-width:10em;
+    }
+    body.galleries>section.galleries.overview{
+        grid-template-columns: 3em 1fr 0px;
+    }
+    section.galleries .to-main{
+        width: 3em;
+        height: 100%;
+        text-align: center;
+    }
+    section.me,
+    section.galleries{
+        width: 100%;
+    }
+}
+@media only screen and (min-resolution: 1.5dppx) and (orientation : portrait) {
+    :root{
+        font-size: 1.5em;
+    }
+}
