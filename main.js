@@ -6,6 +6,91 @@ let G = window.gallery;
 import {createFragment as $C} from "/modules/create_dom.js";
 let $=(s,e=document)=>e.querySelector(s);
 let $A=(s,e=document)=>e.querySelectorAll(s);
+(function() {
+    if (!HTMLElement.prototype.querySelectorAll) {
+        throw new Error('rootedQuerySelectorAll: This polyfill can only be used with browsers that support querySelectorAll');
+    }
+
+    // A temporary element to query against for elements not currently in the DOM
+    // We'll also use this element to test for :scope support
+    let container = document.createElement('div');
+
+    // Check if the browser supports :scope
+    try {
+        // Browser supports :scope, do nothing
+        container.querySelectorAll(':scope *');
+    }
+    catch (e) {
+        // Match usage of scope
+        let rxTest = /(?:^|,)\s*:scope\s+/,
+            rxStart = /^\s*:scope\s+/i,
+            rxOthers = /,\s*:scope\s+/gi;
+
+        // Overrides
+        let overrideNodeMethod = (prototype, methodName)=>{
+            // Store the old method for use later
+            let oldMethod = prototype[methodName];
+
+            // Override the method
+            prototype[methodName] = function(query) {
+                let nodeList, parentNode, frag, idSelector,
+                    gaveId = false,
+                    gaveContainer = false,
+                    parentIsFragment = false;
+
+                if (rxTest.test(query)) {
+
+                    if (!this.parentNode) {
+                        // Add to temporary container
+                        container.appendChild(this);
+                        gaveContainer = true;
+                    }
+
+                    if (this.parentNode instanceof DocumentFragment) {
+                        frag = this.parentNode;
+                        while (frag.firstChild) container.appendChild(frag.firstChild);
+                        parentIsFragment = true;
+                    }
+
+                    let parentNode = this.parentNode;
+
+                    if (!this.id) {
+                        // Give temporary ID
+                        this.id = 'rootedQuerySelector_id_'+(new Date()).getTime();
+                        gaveId = true;
+                    }
+
+                    query = query.replace(rxStart, '#'+this.id).replace(rxOthers, ', #'+this.id);
+
+                    // Find elements against parent node
+                    nodeList = oldMethod.call(parentNode, query);
+
+                    // Reset the ID
+                    if (gaveId) {
+                        this.id = '';
+                    }
+
+                    // Remove from temporary container
+                    if (parentIsFragment) {
+                        while (container.firstChild) frag.appendChild(container.firstChild);
+                    } else if (gaveContainer) {
+                        container.removeChild(this);
+                    }
+
+                    return nodeList;
+                }
+                else {
+                    // No immediate child selector used
+                    return oldMethod.call(this, query);
+                }
+            };
+        };
+
+        // Browser doesn't support :scope, add polyfill
+        overrideNodeMethod(HTMLElement.prototype, 'querySelector');
+        overrideNodeMethod(HTMLElement.prototype, 'querySelectorAll');
+    }
+}());// scope polyfill
 
 function get_lang(langs=["en", "ru"]){
     let lang = localStorage.getItem('preferred_language');
@@ -83,11 +168,10 @@ function scrollbar_recalc(outer, inner) {
 function init_scroll(el){
     let outer = el.matches(".scroll-outer") ? el : $(".scroll-outer", el);
     let inner = outer.firstElementChild;
-    let bc = outer.lastElementChild;
-    if(bc.classList.contains('scroll-bar-container')) return;
+    if($(":scope>.scroll-bar-container", outer)) return;
 
     outer.appendChild($C(`<div class="scroll-bar-container"><div class="scroll-bar">&nbsp;</div></div>`));
-    bc = outer.lastElementChild;
+    let bc = outer.lastElementChild;
     inner.addEventListener('scroll', ()=>scrollbar_recalc(outer, inner), {passive: true});
     inner.addEventListener('mouseenter', ()=>scrollbar_recalc(outer, inner), {passive: true});
     let scrollbar_drag_start = (ev)=>{
@@ -147,36 +231,44 @@ G.contact_services = {
 let open_main=()=>{
     document.body.classList.add('me');
     document.body.classList.remove('galleries');
+    document.body.classList.remove('gallery');
 };
 let open_galleries=()=>{
     document.body.classList.add('galleries');
+    document.body.classList.remove('gallery');
     document.body.classList.remove('me');
-    $("section.galleries").classList.add('overview');
-    for(let i of $A('.gallery.open')) i.classList.remove('open');
+    for(let i of $A('section .gallery.open')) i.classList.remove('open');
 };
 let switch_lang=()=>{
-    let el = $('nav>.lang'), l = el.lang;
-    el.lang = document.body.lang;
+    let l = document.body.lang === 'ru' ? "en" : 'ru';
     localStorage.setItem('preferred_language', l);
     document.body.lang = l;
     document.title = L(G.database.title);
 };
-$('body>nav>.lang').addEventListener('click', switch_lang);
-$('body>nav>.me').addEventListener('click', open_main);
-$('body>nav>.galleries').addEventListener('click', open_galleries);
+for(let i of $A('.lang-change')) i.addEventListener('click', switch_lang);
+$('.to-main').addEventListener('click', open_main);
+$('.to-galleries').addEventListener('click', open_galleries);
 
 function open_gallery(ev){
-    let id = ev.currentTarget.dataset.gallery;
-
-    if(ev.currentTarget.classList.contains("open")){
-        $("section.galleries").classList.add('overview');
-        for(let i of $A('.gallery.open')) i.classList.remove('open');
-    }else {
-        $("section.galleries").classList.remove('overview');
-        $("section.galleries .scroll-inner").scrollTop = 0;
-        for (let i of $A('.gallery.open')) i.classList.remove('open');
-        for (let i of $A(`.gallery[data-gallery="${id}"]`)) i.classList.add('open');
+    let i;
+    if(ev instanceof Event) {
+        i = ev.currentTarget.dataset.gallery;
+        if(ev.currentTarget.classList.contains("open"))
+            return open_galleries();
+    }else{
+        i = ev;
     }
+
+
+    if(i < 0) i = 0;
+    else if(i >= G.database.galleries.length) i = G.database.galleries.length - 1;
+
+    document.body.classList.remove('galleries');
+    document.body.classList.remove('me');
+    document.body.classList.add('gallery');
+    $(".galleries-list-outer .scroll-inner").scrollTop = 0;
+    for (let j of $A('section .gallery.open')) j.classList.remove('open');
+    for (let j of $A(`section .gallery[data-gallery="${i}"]`)) j.classList.add('open');
 }
 
 let image_gallery, image_image;
@@ -274,14 +366,12 @@ G.key_parser=(ev)=>{
             toggle_slideshow();
         }
     }else if($("body.galleries")){
-        let gg = $('section.galleries');
-        if(!gg.classList.contains('overview')) {
-            if ((ev.key === "Escape") || (ev.key === "ArrowLeft")) {
-                gg.classList.add('overview');
-                for (let i of $A('.gallery.open')) i.classList.remove('open');
-            }
-        }else if(ev.key === "ArrowLeft"){
+        if(ev.key === "ArrowLeft"){
             open_main();
+        }
+    }else if($("body.gallery")){
+        if ((ev.key === "Escape") || (ev.key === "ArrowLeft")) {
+            open_galleries();
         }
     }else if($("body.me")){
         if(ev.key === "ArrowRight"){
@@ -298,11 +388,8 @@ fetch("gallery.json").then(resp=>resp.json()).then(db=>{
     if(get_lang() !== document.body.lang) switch_lang();
     document.body.classList.add('me');
 
-    let me = $('section.me .contents');
-    me.appendChild($C(`
-        <div class="bg"><img src="images/${db.me['_bg']}" /></div>
-        <div class="contacts"></div>
-    `));
+    let img = $('section.me .contents-wrap .bg img');
+    img.src = `images/${db.me['_bg']}`;
     let c = $('section.me .contacts');
     for(let i in db.me.contacts){
         c.appendChild($C(`
@@ -312,6 +399,8 @@ fetch("gallery.json").then(resp=>resp.json()).then(db=>{
 
     let g_list = $('.galleries-list');
     let g_contents = $('.galleries-contents');
+    g_list.innerHTML = '';
+    g_contents.innerHTML = '';
     for(let i=0;i<db.galleries.length; ++i){
         let I = db.galleries[i];
         let cover = I.cover;
@@ -338,6 +427,6 @@ fetch("gallery.json").then(resp=>resp.json()).then(db=>{
             `));
         }
     }
-
-    init_scrolls();
 }).catch(console.error);
+
+init_scrolls();
