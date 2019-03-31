@@ -332,9 +332,9 @@ section.image-viewer>.image-container{
     text-align:center;
 }
 section.image-viewer>.image-container>img{
-    max-width: 100%;
-    transform: translateY(-50%);
-    max-height: 100%;
+    max-width: 10%;
+    transform: translateY(-50%) scale(10);
+    max-height: 10%;
 }
 section.image-viewer>.image-container>.ui-overlay{
     display: block;

@@ -6,8 +6,8 @@ let G = window.gallery;
 let start_location_search = location.search;
 
 let $C = (()=>{
-    //from jQuery
 
+    //from jQuery
     let xhtmlTagCloser = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi,
         tagName = /<([\w:\-]+)/,
         tagNameSpace = /([\w\-]+):/;
