@@ -1,7 +1,14 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: complynx
- * Date: 11.10.2018
- * Time: 19:23
- */
+define("IN_CLX", true);
+error_reporting(E_ALL ^ E_NOTICE);
+
+session_start();
+
+include_once("config.php");
+
+header('Content-type: application/json');
+
+if(isset($_REQUEST["is_admin"])){
+    echo json_encode(array("admin"=>true));
+    die();
+}

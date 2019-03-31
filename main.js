@@ -1,12 +1,148 @@
 "use strict";
 
+
 if(!window.gallery) window.gallery = {};
 let G = window.gallery;
+let start_location_search = location.search;
 
-import {createFragment as $C} from "/modules/create_dom.js";
+let $C = (()=>{
+    //from jQuery
+
+    let xhtmlTagCloser = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi,
+        tagName = /<([\w:\-]+)/,
+        tagNameSpace = /([\w\-]+):/;
+
+    let wrapMap = {
+        option: {
+            level:1,
+            prefix:"<select multiple='multiple'>",
+            postfix:"</select>"
+        },
+
+        tbody: {
+            level:1,
+            prefix:"<table>",
+            postfix:"</table>"
+        },
+        col: {
+            level:2,
+            prefix:"<table><colgroup>",
+            postfix:"</colgroup></table>"
+        },
+        tr: {
+            level:1,
+            prefix:"<tbody>",
+            postfix:"</tbody>",
+            base:"tbody"
+        },
+        td: {
+            level:1,
+            prefix:"<tr>",
+            postfix:"</tr>",
+            base:"tr"
+        },
+
+        _default:{
+            level:0,
+            prefix:"",
+            postfix:""
+        }
+    };
+
+    wrapMap.optgroup = wrapMap.option;
+
+    wrapMap.thead = wrapMap.tfoot = wrapMap.colgroup = wrapMap.caption = wrapMap.tbody;
+    wrapMap.th = wrapMap.td;
+
+    /**
+     * Creates HTML chunk from string.
+     * @return  {DocumentFragment}
+     * @param   {*}                     html        html chunk to parse and create
+     * @param   {Document=document}     doc         relative document
+     * @param   {Object=}               iWrapMap    wrapMap to use in element creation
+     */
+    let createFromString = (html,doc,iWrapMap)=>{
+        iWrapMap = iWrapMap || wrapMap;
+        doc = doc || window.document;
+        if(typeof(html) !== "string") html = ""+html;
+        let frag = doc.createDocumentFragment();
+        let tmp = frag.appendChild(doc.createElement("div")),
+            tag,wrap,nodes,base,prefix="",postfix="",level=0;
+
+        // Deserialize a standard representation
+        tag = ( tagName.exec( html ) || [ "", "" ] )[ 1 ].toLowerCase();
+
+        let NS=(tagNameSpace.exec(tag)||["",""])[1],NSWrap=iWrapMap[ NS +":"];
+        wrap = iWrapMap[ tag ];
+
+        if(NSWrap && NSWrap.remove) html = html.replace(new RegExp((NS+":").escapeRegExp(),"gi"),"");
+        if(NSWrap && NSWrap.wrapMap) return createFromString(html,doc,NSWrap.wrapMap);
+
+        if(wrap){
+            base = wrap;
+            prefix = wrap.prefix;
+            postfix = wrap.postfix;
+            level = wrap.level;
+            while(base.base && (base = iWrapMap[base.base])){
+                prefix = base.prefix + prefix;
+                postfix = postfix + base.postfix;
+                level += base.level;
+            }
+        }
+
+        prefix = iWrapMap._default.prefix + prefix;
+        postfix = postfix + iWrapMap._default.postfix;
+        level += iWrapMap._default.level;
+        tmp.innerHTML = prefix + html.replace( xhtmlTagCloser, "<$1></$2>" ) + postfix;
+
+        // Descend through wrappers to the right content
+        let j = level;
+        while ( j-- ) {
+            tmp = tmp.lastChild;
+        }
+        nodes = Array.prototype.slice.call(tmp.childNodes);
+
+        frag.textContent="";
+        for(let j = 0; j < nodes.length; ++j) frag.appendChild(nodes[j]);
+
+        return frag;
+    };
+
+    /**
+     * Renders chunk of HTML and wraps it into DocumentFragment to be inserted wherever we want.
+     * @return  {DocumentFragment}
+     * @param   {*}                     html        html chunk to parse and create
+     * @param   {Document=document}     doc         relative document
+     * @param   {Number=3}              depth       recursion depth
+     * @param   {Object=}               iWrapMap    wrapMap to use in element creation
+     */
+    return (html,doc,depth,iWrapMap)=>{
+        if(depth === undefined) depth = 3;
+        doc = doc || window.document;
+        let ret = doc.createDocumentFragment();
+
+        if(html instanceof DocumentFragment){
+            return html;
+        }else if(html instanceof Node){
+            ret.appendChild(html);
+        }else if(depth>0 && (html instanceof NodeList
+            || html instanceof Array)){
+            for(let i=0;i<html.length;++i){
+                ret.appendChild(createFragment(html[i],doc,depth-1));
+            }
+        }else{
+            ret.appendChild(createFromString(html,doc,iWrapMap));
+        }
+
+        if(ret.hasChildNodes())
+            return ret;
+
+        return null;
+    };
+})();
 let $=(s,e=document)=>e.querySelector(s);
 let $A=(s,e=document)=>e.querySelectorAll(s);
-(function() {
+(()=>{
     if (!HTMLElement.prototype.querySelectorAll) {
         throw new Error('rootedQuerySelectorAll: This polyfill can only be used with browsers that support querySelectorAll');
     }
@@ -90,9 +226,64 @@ let $A=(s,e=document)=>e.querySelectorAll(s);
         overrideNodeMethod(HTMLElement.prototype, 'querySelector');
         overrideNodeMethod(HTMLElement.prototype, 'querySelectorAll');
     }
-}());// scope polyfill
+})();// scope polyfill
+function splitOnce(str, splitter) {
+    let ind = str.indexOf(splitter);
+    if(ind < 0) return [str];
 
-function get_lang(langs=["en", "ru"]){
+    let start = str.substring(0, ind);
+    let rest = str.substring(ind + splitter.length);
+
+    return [start, rest];
+}
+function parseQuery(query, tuples = false) {
+    if(query[0] === '?') query = query.substring(1);
+
+    let args = query.split('&');
+
+    let ret = tuples ? [] : {};
+
+    function add(key, value) {
+        if(tuples){
+            ret.push([key, value]);
+        }else{
+            ret[key] = value;
+        }
+    }
+
+    for (let i=0; i < args.length; i++) {
+        let arg = args[i];
+
+        if (-1 === arg.indexOf('=')) {
+            add(decodeURIComponent(arg).trim(), true);
+        }
+        else {
+            let kvp = splitOnce(arg, '=');
+
+            add(decodeURIComponent(kvp[0]).trim(), decodeURIComponent(kvp[1]).trim());
+        }
+    }
+
+    return ret;
+}
+
+let fetch_image=function(resource, init, trials=5, delay=50){
+    if(typeof trials === "number"){
+        let max = trials, iteration = 0;
+        trials = () => ++iteration <= max;
+    }
+    return new Promise((resolve, reject)=>{
+        let fetcher = ()=>{
+            fetch(resource, init).then(resp => resp.blob()).then(resolve).catch(reason => {
+                if (trials(reason)) setTimeout(fetcher, delay);
+                else reject(reason);
+            });
+        };
+        fetcher();
+    });
+};
+
+let get_lang = (langs=["en", "ru"])=>{
     let lang = localStorage.getItem('preferred_language');
     if(lang && langs.indexOf(lang) >= 0)
         return lang;
@@ -119,12 +310,15 @@ function get_lang(langs=["en", "ru"]){
 
     localStorage.setItem('preferred_language', lang);
     return lang;
-}
-let L=G.L=(choice)=>{
+};
+/**
+ * @return {string}
+ */
+let L=G.L=function(choice, lang=document.body.lang){
     if(typeof choice === "string")
         return choice;
-    if(choice[document.body.lang])
-        return choice[document.body.lang];
+    if(choice[lang])
+        return choice[lang];
     return choice[Object.keys(choice)[0]];
 };
 let is_touch = false;
@@ -133,7 +327,7 @@ window.addEventListener('touchstart', ()=>{
     $('html').classList.add('touch-interface');
 }, {once:true, capture:true});
 let scrollbar_size = -1;
-function getScrollbarSize() {
+let getScrollbarSize = () =>{
     if(scrollbar_size < 0) {
         let d = document.createElement('div');
 
@@ -149,11 +343,11 @@ function getScrollbarSize() {
         d.remove();
     }
     return scrollbar_size;
-}
+};
 document.body.style.cssText += '--scrollbar-size:' + getScrollbarSize() + "px;";
 
 let sbv_remover = /(--scrollbar-ratio:[0-9.]+;|--scrollbar-top:[0-9.]+;)/g;
-function scrollbar_recalc(outer, inner) {
+let scrollbar_recalc = (outer, inner) =>{
     let sh = inner.scrollHeight, oh = inner.offsetHeight;
     let ratio = sh > 0 ? oh / sh : 1, top = sh > 0 ? inner.scrollTop / sh : 0;
 
@@ -164,8 +358,8 @@ function scrollbar_recalc(outer, inner) {
         let css = outer.style.cssText.replace(sbv_remover, "");
         outer.style.cssText = css + `--scrollbar-ratio:${ratio};--scrollbar-top:${top};`;
     }
-}
-function init_scroll(el){
+};
+let init_scroll = (el)=>{
     let outer = el.matches(".scroll-outer") ? el : $(".scroll-outer", el);
     let inner = outer.firstElementChild;
     if($(":scope>.scroll-bar-container", outer)) return;
@@ -212,12 +406,12 @@ function init_scroll(el){
     bc.firstElementChild.addEventListener('mousedown', scrollbar_drag_start);
     bc.firstElementChild.addEventListener('touchstart', scrollbar_drag_start);
     scrollbar_recalc(outer, inner);
-}
-function init_scrolls(){
+};
+let init_scrolls = ()=>{
     for(let i of $A('.scroll-outer')) init_scroll(i);
-}
+};
 
-
+{
 
 G.contact_services = {
     "skype:": "&#xf30b;",
@@ -226,30 +420,66 @@ G.contact_services = {
     "https://vk.me/": "&#xe802;",
     "tel:": "&#xe801;"
 };
-
-
-let open_main=()=>{
-    document.body.classList.add('me');
-    document.body.classList.remove('galleries');
-    document.body.classList.remove('gallery');
+let current_page;
+let push_current_state = function(){
+    let [title, url] = current_page();
+    history.pushState(null, title, url);
+    document.title = title;
+};
+let replace_current_state = function(){
+    let [title, url] = current_page();
+    history.replaceState(null, title, url);
+    document.title = title;
 };
 let open_galleries=()=>{
     document.body.classList.add('galleries');
     document.body.classList.remove('gallery');
-    document.body.classList.remove('me');
     for(let i of $A('section .gallery.open')) i.classList.remove('open');
+
+    push_current_state();
 };
 let switch_lang=()=>{
     let l = document.body.lang === 'ru' ? "en" : 'ru';
     localStorage.setItem('preferred_language', l);
     document.body.lang = l;
-    document.title = L(G.database.title);
+
+    replace_current_state();
 };
 for(let i of $A('.lang-change')) i.addEventListener('click', switch_lang);
-$('.to-main').addEventListener('click', open_main);
-$('.to-galleries').addEventListener('click', open_galleries);
+// $('.to-main').addEventListener('click', open_main);
+// $('.to-galleries').addEventListener('click', open_galleries);
+let current_gallery_index = function(){
+    let i = $(`section .gallery.open`).dataset.gallery;
 
-function open_gallery(ev){
+    if(i < 0) i = 0;
+    else if(i >= G.database.galleries.length) i = G.database.galleries.length - 1;
+
+    return i;
+};
+current_page = function(){
+    let location_prefix = `${location.origin}${location.pathname}`;
+    if(document.body.classList.contains('galleries')){
+        return [L(G.database.title), `${location_prefix}`];
+    }else if($('.image-viewer').classList.contains('open')){
+        let iv = $('.image-viewer');
+        let i = current_gallery_index();
+        let img_id = iv.dataset.image_id;
+        let j = parseInt(iv.dataset.image_num);
+        let I = G.database.galleries[i];
+
+        return [`#${j} — ` + L(I.title) + " — " + L(G.database.title),
+            `${location.origin}${location.pathname}?photo=${encodeURIComponent(img_id)}`];
+    }else{
+        let i = current_gallery_index();
+        let I = G.database.galleries[i];
+        let gallery_id = L(I.title, 'en');
+
+        return [L(I.title) + " — " + L(G.database.title),
+            `${location.origin}${location.pathname}?gallery=${encodeURIComponent(gallery_id)}`];
+    }
+};
+
+let open_gallery = (ev)=>{
     let i;
     if(ev instanceof Event) {
         i = ev.currentTarget.dataset.gallery;
@@ -259,50 +489,61 @@ function open_gallery(ev){
         i = ev;
     }
 
-
     if(i < 0) i = 0;
     else if(i >= G.database.galleries.length) i = G.database.galleries.length - 1;
 
     document.body.classList.remove('galleries');
-    document.body.classList.remove('me');
     document.body.classList.add('gallery');
     $(".galleries-list-outer .scroll-inner").scrollTop = 0;
     for (let j of $A('section .gallery.open')) j.classList.remove('open');
     for (let j of $A(`section .gallery[data-gallery="${i}"]`)) j.classList.add('open');
-}
 
-let image_gallery, image_image;
-function open_image_no(i, j) {
+    push_current_state();
+};
+
+let open_image_no = (i, j) =>{
     if(i < 0) i = 0;
     else if(i >= G.database.galleries.length) i = G.database.galleries.length - 1;
+    if(!$(`section .gallery[data-gallery="${i}"]`).classList.contains('open')){
+        open_gallery(i);
+    }
 
     let I = G.database.galleries[i];
 
     if(j < 0) j = I.contents.length - 1;
     else if(j >= I.contents.length) j = 0;
 
-    image_gallery = i;
-    image_image = j;
+    let image_id = I.contents[j];
 
-    $('.image-viewer').classList.add('open');
+    let iv = $('.image-viewer');
+    iv.dataset.image_num = j;
+    iv.dataset.image_id = image_id;
+    $('.image-container img', iv).src = `/photogallery/images/sources/${I.contents[j]}`;
 
-    $('.image-viewer .image-container img').src = `/photogallery/images/sources/${I.contents[j]}`;
-}
-function open_image(ev){
+    if(!iv.classList.contains('open')) {
+        iv.classList.add('open');
+        push_current_state();
+    }else{
+        replace_current_state();
+    }
+};
+let open_image = (ev)=>{
     console.log("open image", ev);
     let i = parseInt(ev.target.dataset.gallery);
     let j = parseInt(ev.target.dataset.image);
 
     open_image_no(i, j);
-}
-function open_next_image(){
-    open_image_no(image_gallery, image_image + 1);
-}
-function open_prev_image(){
-    open_image_no(image_gallery, image_image - 1);
-}
+};
+let open_next_image = ()=>{
+    let iv = $('.image-viewer');
+    open_image_no(current_gallery_index(), parseInt(iv.dataset.image_num) + 1);
+};
+let open_prev_image = ()=>{
+    let iv = $('.image-viewer');
+    open_image_no(current_gallery_index(), parseInt(iv.dataset.image_num) - 1);
+};
 let slideshow_timer = false;
-function toggle_slideshow(){
+let toggle_slideshow = ()=>{
     if(!slideshow_timer){
         slideshow_timer = setInterval(open_next_image, 3000);
         $(".image-viewer").classList.add('slideshow');
@@ -311,7 +552,7 @@ function toggle_slideshow(){
         slideshow_timer = false;
         $(".image-viewer").classList.remove('slideshow');
     }
-}
+};
 let viewer_close = ()=>{
     $('.image-viewer').classList.remove('open');
     if(document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement){
@@ -320,6 +561,7 @@ let viewer_close = ()=>{
     if(slideshow_timer){
         toggle_slideshow();
     }
+    push_current_state();
 };
 $('.image-viewer .image-container .slideshow').addEventListener('click', toggle_slideshow);
 $('.image-viewer .image-container .prev').addEventListener('click', open_prev_image);
@@ -329,12 +571,57 @@ $('.image-viewer .background-overlay').addEventListener('click', viewer_close);
 $('.image-viewer .image-container .fs-toggle').addEventListener('click', ()=>G.switch_fullscreen());
 
 
-function fullscreen_change(){
+let find_photo=function(photo_id){
+    for(let i=0, L=G.database.galleries.length;i < L; ++i){
+        let I = G.database.galleries[i];
+        for(let j=0, L = I.contents.length; j < L; ++j){
+            let J = I.contents[j];
+            if(J === photo_id){
+                return [i, j];
+            }
+        }
+    }
+    return [false, false];
+};
+let find_gallery=function(gal_name){
+    for(let i=0, L=G.database.galleries.length;i < L; ++i){
+        let I = G.database.galleries[i];
+        for(let t in I.title){
+            if(I.title[t] === gal_name) return i;
+        }
+    }
+    return false;
+};
+let parse_location = function(location){
+    let q = parseQuery(location);
+    console.log(q);
+    if(q.photo){
+        let [i,j] = find_photo(q.photo);
+        if(j !== false){
+            open_image_no(i,j);
+        }
+    }else if(q.gallery){
+        if($('.image-viewer').classList.contains('open')) viewer_close();
+        let i = find_gallery(q.gallery);
+        if(i !== false) open_gallery(i);
+    }else{
+        if(!document.body.classList.contains('galleries')){
+            if($('.image-viewer').classList.contains('open')) viewer_close();
+            open_galleries();
+        }
+    }
+};
+let popStateListener=function(ev){
+    parse_location(location.search);
+};
+window.addEventListener('popstate', popStateListener);
+
+let fullscreen_change = G.fullscreen_change = ()=>{
     if(document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement)
         $('.image-viewer .ui-overlay .fs-toggle').innerText = "";
     else
         $('.image-viewer .ui-overlay .fs-toggle').innerText = "";
-}
+};
 
 window.addEventListener('fullscreenchange', fullscreen_change, {passive:true});
 window.addEventListener('mozfullscreenchange', fullscreen_change, {passive:true});
@@ -365,16 +652,8 @@ G.key_parser=(ev)=>{
         }else if(ev.key === "s"){
             toggle_slideshow();
         }
-    }else if($("body.galleries")){
-        if(ev.key === "ArrowLeft"){
-            open_main();
-        }
     }else if($("body.gallery")){
         if ((ev.key === "Escape") || (ev.key === "ArrowLeft")) {
-            open_galleries();
-        }
-    }else if($("body.me")){
-        if(ev.key === "ArrowRight"){
             open_galleries();
         }
     }
@@ -385,17 +664,8 @@ fetch("gallery.json").then(resp=>resp.json()).then(db=>{
     G.database = db;
 
     document.title = L(db.title);
+    document.body.classList.add('galleries');
     if(get_lang() !== document.body.lang) switch_lang();
-    document.body.classList.add('me');
-
-    let img = $('section.me .contents-wrap .bg img');
-    img.src = `images/${db.me['_bg']}`;
-    let c = $('section.me .contacts');
-    for(let i in db.me.contacts){
-        c.appendChild($C(`
-            <a href="${i}${db.me.contacts[i]}" target="_blank">${G.contact_services[i]}</a>
-        `));
-    }
 
     let g_list = $('.galleries-list');
     let g_contents = $('.galleries-contents');
@@ -427,6 +697,52 @@ fetch("gallery.json").then(resp=>resp.json()).then(db=>{
             `));
         }
     }
+    parse_location(start_location_search);
 }).catch(console.error);
 
 init_scrolls();
+
+}
+
+
+/**
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ *                                    Admin section                                    *
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ */
+
+{
+    if(!window.admin) window.admin = {};
+    let A = window.admin;
+
+    A.open_login = ()=>{
+        if(!A.is_admin)
+            $('body').classList.add('login');
+    };
+    A.close_login = ()=>{
+        $('body').classList.remove('login');
+    };
+    A.logout = ()=>{
+        $('body').classList.remove('admin-mode');
+        A.is_admin = false;
+    };
+    A.send_login = ()=>{
+        fetch("main.php?is_admin=1").then(r => r.json()).then(resp => {
+            if (resp.admin) {
+                A.init_admin(resp);
+            }
+        });
+        A.close_login();
+    };
+    A.init_admin = (options)=>{
+        if(A.is_admin) return;
+
+        console.log("Yeah, you can call it manually, but you won't be able to save things on a server.");
+        A.is_admin = true;
+        $('body').classList.add('admin-mode');
+    };
+
+    // $('.me .logo').addEventListener('click', A.open_login);
+    $('.login-popup .background-overlay').addEventListener('click', A.close_login);
+    $('.login-popup .login-form').addEventListener('click', A.send_login);
+}
