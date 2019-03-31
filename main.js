@@ -742,7 +742,7 @@ init_scrolls();
         $('body').classList.add('admin-mode');
     };
 
-    // $('.me .logo').addEventListener('click', A.open_login);
+    for(let i of $A('.open-cp')) i.addEventListener('click', A.open_login);
     $('.login-popup .background-overlay').addEventListener('click', A.close_login);
     $('.login-popup .login-form').addEventListener('click', A.send_login);
 }

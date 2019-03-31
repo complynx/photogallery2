@@ -533,7 +533,20 @@ section.login-popup .login-form{
     margin: 50vh auto 0 auto;
     background: #fff;
 }
-
+.open-cp{
+    float: right;
+    display: inline-block;
+    padding-right: 1em;
+    text-decoration: underline #333 dashed;
+    opacity: .7;
+    cursor: pointer;
+}
+.open-cp:hover{
+    opacity: 1;
+    user-select: none;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+}
 
 
 
